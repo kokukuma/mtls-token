@@ -31,7 +31,7 @@ h9M=
 -----END CERTIFICATE-----
 `
 
-	rsaKeyPEM = testingKey(`-----BEGIN RSA PRIVATE KEY-----
+	rsaKeyPEM = testingKey(`-----BEGIN RSA TESTING KEY-----
 MIIEpAIBAAKCAQEAyaa8gz0uZA3ErvYw1hSMcTpH/qlYlslImU/OQdsF3CX+BFcc
 0FtYq9tk0Y1gK8lnBUhphHesfLn5f+ljz+2C+7G+86yrZGndafmKeZ+zhv4l/QBo
 0Kp9Cm6rbM39mU116SwKARl0GXCUk7IqzB70L+d0hyNlWQ8ZtMocpr+pv76A1hJ0
