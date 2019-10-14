@@ -4,11 +4,11 @@ This package is a implementation of Certificate-Bound Access Tokens written in [
 
 ### Purpose
 
-This package's responsibility is creating and verifing Certificate-Bound token.
+The purpose of package is creating and verifing Certificate-Bound token.
 
-This token is used for Access Token and Refresh Token of OAuth 2.0.
+This token can be used for Access Token and Refresh Token of OAuth 2.0.
 
-How to pass the token to resource server? How to mangae key pair and certificate? There are out of scope.
+How to pass the token to resource server? How to manage key pair and certificate? There are out of scope.
 
 ### How it works
 
@@ -17,16 +17,16 @@ How to pass the token to resource server? How to mangae key pair and certificate
 The OAuth 2.0 back channel process is below.
 
 + 1. Client server sends the request to token endpoint of Authorization server.
-+ 2. Authorization server create token and return it if the Client server pass a authentication.
-+ 3. Clinet server request to Resource server with the token.
-+ 4. Resource server verify the token and returns data if the token is valid.
++ 2. Authorization server creates token and return it if the Client server pass a authentication.
++ 3. Client server requests to Resource server with the token.
++ 4. Resource server verifies the token and returns data if the token is valid.
 
-The problem of Bearer token is that attcker gets the access token, they can access to the Resource server. Mutual TLS Certificate-Bound Access Tokens defined in [OAuth 2.0 Mutual TLS Client Authentication and Certificate-Bound Access Tokens draft-ietf-oauth-mtls-14](https://tools.ietf.org/html/draft-ietf-oauth-mtls-14) is a method how to verify the proof of possession. The summary of this method is below.
+The problem of Bearer token is that attacker gets the access token, they can access to the Resource server. Mutual TLS Certificate-Bound Access Tokens defined in [OAuth 2.0 Mutual TLS Client Authentication and Certificate-Bound Access Tokens draft-ietf-oauth-mtls-14](https://tools.ietf.org/html/draft-ietf-oauth-mtls-14) is a method how to verify the proof of possession. The summary of this method is below.
 
-+ Basiclly, Client server, Authorization server and Resource server must be connected by mutual TLS.
++ Basically, Client server, Authorization server and Resource server must be connected by mutual TLS.
 + When Authorization server creates access token, the thumbprint of certificate is added to the token. The certificate is the client certificate used in mTLS between Client server and Authorization server.
 + When Resource server gets the token, the thumbprint written in the token is compared with the thumbprint of certificate which is used in mTLS connection between Client server and Resource server.
-+ If attcker who gets the access token try to gets a resource from Resource server, they have to connect mTLS as Client server. But they couldn't do it because they don't have the private key which uses Client server.
++ If attacker who got the access token try to gets a resource from Resource server, they have to connect mTLS as Client server. But they couldn't do it because they don't have the private key which uses Client server.
 
 
 ### How to use
@@ -61,7 +61,7 @@ The problem of Bearer token is that attcker gets the access token, they can acce
 
 + Decode and verify the signedJWT. It is done in resource server.
   ```
-	token := &customToken{}
-	err = auth_grpc.DecodeToken(ctx, tokenStr, pubKey, token)
+  token := &customToken{}
+  err = auth_grpc.DecodeToken(ctx, tokenStr, pubKey, token)
   ```
 
