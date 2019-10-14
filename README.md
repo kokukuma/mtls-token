@@ -1,6 +1,6 @@
 # Mutual TLS Certificate-Bound Access Tokens
 
-This package is a implimention of Certificate-Bound Access Tokens written in [OAuth 2.0 Mutual TLS Client Authentication and Certificate-Bound Access Tokens draft-ietf-oauth-mtls-14](https://tools.ietf.org/html/draft-ietf-oauth-mtls-14).
+This package is a implementation of Certificate-Bound Access Tokens written in [OAuth 2.0 Mutual TLS Client Authentication and Certificate-Bound Access Tokens draft-ietf-oauth-mtls-14](https://tools.ietf.org/html/draft-ietf-oauth-mtls-14).
 
 ### Purpose
 
