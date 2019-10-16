@@ -11,7 +11,7 @@ import (
 // IssueToken creates access token.
 func IssueToken(req *http.Request, privateKey *rsa.PrivateKey, token mtls_token.Issuer) (string, error) {
 	if req == nil {
-		return "", errors.New("http requuest is nil")
+		return "", errors.New("http request is nil")
 	}
 	state := req.TLS
 	return mtls_token.IssueToken(state, privateKey, token)
