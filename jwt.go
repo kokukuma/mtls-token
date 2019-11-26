@@ -16,22 +16,78 @@ const (
 	alg = crypto.SHA256
 )
 
-func encodeJWT(privateKey *rsa.PrivateKey, token Issuer) (string, error) {
+// JWT represents JWT
+type JWT struct {
+	header RawHeader
+	claims RawClaims
+}
 
-	// header
-	head, err := marshalEncode(token.getHeader())
+// RawClaims is the claims of JWT
+type RawClaims map[string]interface{}
+
+// RawHeader is the header of JWT
+type RawHeader map[string]interface{}
+
+// NewJWT creates JWT
+func NewJWT(header RawHeader, claims RawClaims) *JWT {
+	return &JWT{
+		header: header,
+		claims: claims,
+	}
+}
+
+// Encoding returns unsafe JWT
+func (j JWT) Encoding() (string, error) {
+	h, err := marshalEncode(j.header)
 	if err != nil {
 		return "", err
 	}
 
 	// claims
-	claims, err := marshalEncode(token)
+	c, err := marshalEncode(j.claims)
+	if err != nil {
+		return "", err
+	}
+
+	e := fmt.Sprintf("%s.%s", h, c)
+
+	return e, nil
+}
+
+// Parse returns JWT from jwtSTring
+func Parse(jwtString string) (*JWT, error) {
+	parts := strings.Split(jwtString, ".")
+	if len(parts) <= 1 {
+		return nil, errors.New("invalid jwt format")
+	}
+
+	jwt := &JWT{
+		header: map[string]interface{}{},
+		claims: map[string]interface{}{},
+	}
+
+	err := decodeUnmarshal(parts[0], &jwt.header)
+	if err != nil {
+		return nil, err
+	}
+
+	err = decodeUnmarshal(parts[1], &jwt.claims)
+	if err != nil {
+		return nil, err
+	}
+
+	return jwt, nil
+}
+
+func signJWT(privateKey *rsa.PrivateKey, jwt *JWT) (string, error) {
+
+	// header
+	ss, err := jwt.Encoding()
 	if err != nil {
 		return "", err
 	}
 
 	// signature
-	ss := fmt.Sprintf("%s.%s", head, claims)
 	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, alg, execSha256(ss))
 	if err != nil {
 		return "", err

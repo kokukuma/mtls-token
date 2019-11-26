@@ -9,14 +9,14 @@ import (
 )
 
 // IssueToken create token
-func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, token Issuer) (string, error) {
+func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, claims RawClaims) (string, error) {
 	if state == nil {
 		return "", ErrMutualTLSConnection
 	}
 	if privateKey == nil {
 		return "", ErrKeyPair
 	}
-	if token == nil {
+	if claims == nil {
 		return "", ErrTokenStruct
 	}
 
@@ -25,51 +25,67 @@ func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, token Is
 		return "", err
 	}
 
-	// set cnf
+	// TODO: こういうClaimの定義はどこが知るべきか？
 	iat := time.Now()
-	token.CnfSet(tp)
-	token.IatSet(iat)
-	token.ExpSet(iat.Add(time.Hour))
+	claims["iat"] = iat.Unix()
+	claims["exp"] = iat.Add(time.Hour).Unix()
+	claims["x5t"] = map[string]string{
+		"S256": tp,
+	}
 
-	// encode
-	return encodeJWT(privateKey, token)
+	// header
+	header := RawHeader{
+		"kid": "",
+		"alg": "",
+		"typ": "JWT",
+	}
+	jwt := NewJWT(header, claims)
+
+	return signJWT(privateKey, jwt)
 }
 
 // DecodeToken is decode token
-func DecodeToken(state *tls.ConnectionState, payload string, publicKey *rsa.PublicKey, token Verifyer) error {
+func DecodeToken(state *tls.ConnectionState, jwtString string, publicKey *rsa.PublicKey) (*JWT, error) {
 	if state == nil {
-		return ErrMutualTLSConnection
+		return nil, ErrMutualTLSConnection
 	}
 	if publicKey == nil {
-		return ErrKeyPair
+		return nil, ErrKeyPair
 	}
-	if token == nil {
-		return ErrTokenStruct
-	}
-	err := decodeJWT(payload, token)
+
+	jwt, err := Parse(jwtString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// verify signature
-	if err := verifyJWT(payload, publicKey); err != nil {
-		return err
+	if err := verifyJWT(jwtString, publicKey); err != nil {
+		return nil, err
 	}
 
 	// verify token claims
-	if err := token.verifyClaims(); err != nil {
-		return err
+	// TODO: この検証ロジックはexpを知っているところで持つ
+	if exp, ok := jwt.claims["exp"].(int64); ok {
+		now := time.Now().Unix()
+		if exp < now {
+			return nil, ErrTokenExpire
+		}
 	}
 
 	// proof-of-possession
+	// TODO: この検証ロジックはexpを知っているところで持つ
 	tp, err := getThumbprintFromTLSState(state)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := token.verifyPoP(tp); err != nil {
-		return err
+	if x5t, ok := jwt.claims["x5t"].(map[string]string); ok {
+		if s256, ok := x5t["S256"]; ok {
+			if s256 != tp {
+				return nil, ErrVerifyPoP
+			}
+		}
 	}
-	return nil
+	return jwt, nil
 }
 
 func getThumbprintFromTLSState(state *tls.ConnectionState) (string, error) {

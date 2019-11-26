@@ -28,16 +28,21 @@ func main() {
 
 	// server
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := &customToken{
-			Token: mtoken.Token{
-				Kid: "kokukuma",
-				Iss: "kokukuma",
-			},
-			ClientID: "3",
-			DNSName:  "kokukuma.com",
-			Test:     []string{"kokuban", "kumasan"},
+		// token := &customToken{
+		// 	Token: mtoken.Token{
+		// 		Kid: "kokukuma",
+		// 		Iss: "kokukuma",
+		// 	},
+		// 	ClientID: "3",
+		// 	DNSName:  "kokukuma.com",
+		// 	Test:     []string{"kokuban", "kumasan"},
+		// }
+
+		claims := mtoken.RawClaims{
+			"kid": "kokukuma",
 		}
-		tokenStr, err := mtoken_http.IssueToken(r, privKey, token)
+
+		tokenStr, err := mtoken_http.IssueToken(r, privKey, claims)
 		if err != nil {
 			log.Println(err)
 		}
@@ -62,12 +67,11 @@ func main() {
 	tokenStr := string(b)
 	fmt.Println(tokenStr)
 
-	verifiedToken := &customToken{}
-	err = mtoken_http.DecodeToken(resp, tokenStr, pubKey, verifiedToken)
+	jwt, err := mtoken_http.DecodeToken(resp, tokenStr, pubKey)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	fmt.Println(verifiedToken)
+	fmt.Println(jwt)
 }
 
 func getTLSServerConfig() *tls.Config {
