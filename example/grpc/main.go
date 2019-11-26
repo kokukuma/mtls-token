@@ -89,5 +89,4 @@ func creteSampleKey() (*rsa.PrivateKey, *rsa.PublicKey) {
 		log.Fatalf("failed to convert rsa")
 	}
 	return privKey, pubKey
-
 }

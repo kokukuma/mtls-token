@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"time"
 )
@@ -88,14 +87,7 @@ func getThumbprintFromTLSState(state *tls.ConnectionState) (string, error) {
 
 	// The first one is the client certificate.
 	cert := PeerCertificates[0]
-	pkey, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
-	if err != nil {
-		return "", err
-	}
-	// public key pem format
-	// pem.Encode(os.Stdout, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: pkey})
-
-	sum := sha256.Sum256(pkey)
+	sum := sha256.Sum256(cert.Raw)
 	tp := base64.RawURLEncoding.EncodeToString(sum[:])
 	return tp, nil
 }
