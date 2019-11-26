@@ -10,23 +10,26 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
 	alg = crypto.SHA256
 )
 
+var (
+	timeFunc = func() time.Time {
+		return time.Now()
+	}
+)
+
 // JWT represents JWT
 type JWT struct {
 	header RawHeader
 	claims RawClaims
+	// TODO: signing methodを追加.
+	// これを設定するときに、headerの値も指定される形にする.
 }
-
-// RawClaims is the claims of JWT
-type RawClaims map[string]interface{}
-
-// RawHeader is the header of JWT
-type RawHeader map[string]interface{}
 
 // NewJWT creates JWT
 func NewJWT(header RawHeader, claims RawClaims) *JWT {
@@ -37,7 +40,7 @@ func NewJWT(header RawHeader, claims RawClaims) *JWT {
 }
 
 // Encoding returns unsafe JWT
-func (j JWT) Encoding() (string, error) {
+func (j *JWT) Encoding() (string, error) {
 	h, err := marshalEncode(j.header)
 	if err != nil {
 		return "", err
@@ -52,6 +55,21 @@ func (j JWT) Encoding() (string, error) {
 	e := fmt.Sprintf("%s.%s", h, c)
 
 	return e, nil
+}
+
+func (j *JWT) signJWT(privateKey *rsa.PrivateKey) (string, error) {
+	// header
+	ss, err := j.Encoding()
+	if err != nil {
+		return "", err
+	}
+
+	// signature
+	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, alg, execSha256(ss))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.%s", ss, base64.RawURLEncoding.EncodeToString(sig)), nil
 }
 
 // Parse returns JWT from jwtSTring
@@ -77,35 +95,6 @@ func Parse(jwtString string) (*JWT, error) {
 	}
 
 	return jwt, nil
-}
-
-func signJWT(privateKey *rsa.PrivateKey, jwt *JWT) (string, error) {
-
-	// header
-	ss, err := jwt.Encoding()
-	if err != nil {
-		return "", err
-	}
-
-	// signature
-	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, alg, execSha256(ss))
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s.%s", ss, base64.RawURLEncoding.EncodeToString(sig)), nil
-}
-
-func decodeJWT(signedJWT string, token interface{}) error {
-	// decode claims
-	s := strings.Split(signedJWT, ".")
-	if len(s) < 2 {
-		return errors.New("invalid token received")
-	}
-	err := decodeUnmarshal(s[1], &token)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func verifyJWT(token string, key *rsa.PublicKey) error {

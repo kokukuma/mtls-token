@@ -15,29 +15,12 @@ import (
 	mtoken_http "github.com/kokukuma/mtls-token/http"
 )
 
-type customToken struct {
-	mtoken.Token
-	ClientID string   `json:"client_id"`
-	DNSName  string   `json:"dns_name"`
-	Test     []string `json:"test"`
-}
-
 func main() {
 	// sample private/public key
 	privKey, pubKey := creteSampleKey()
 
 	// server
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// token := &customToken{
-		// 	Token: mtoken.Token{
-		// 		Kid: "kokukuma",
-		// 		Iss: "kokukuma",
-		// 	},
-		// 	ClientID: "3",
-		// 	DNSName:  "kokukuma.com",
-		// 	Test:     []string{"kokuban", "kumasan"},
-		// }
-
 		claims := mtoken.RawClaims{
 			"kid": "kokukuma",
 		}

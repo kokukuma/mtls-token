@@ -5,18 +5,17 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
-	"time"
 )
 
 // IssueToken create token
-func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, claims RawClaims) (string, error) {
+func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, rc RawClaims) (string, error) {
 	if state == nil {
 		return "", ErrMutualTLSConnection
 	}
 	if privateKey == nil {
 		return "", ErrKeyPair
 	}
-	if claims == nil {
+	if rc == nil {
 		return "", ErrTokenStruct
 	}
 
@@ -25,23 +24,21 @@ func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, claims R
 		return "", err
 	}
 
-	// TODO: こういうClaimの定義はどこが知るべきか？
-	iat := time.Now()
-	claims["iat"] = iat.Unix()
-	claims["exp"] = iat.Add(time.Hour).Unix()
-	claims["x5t"] = map[string]string{
-		"S256": tp,
+	claims, err := NewClaims(rc, tp)
+	if err != nil {
+		return "", err
 	}
 
 	// header
 	header := RawHeader{
-		"kid": "",
-		"alg": "",
+		"kid": "sample_key",
+		"alg": "RS256",
 		"typ": "JWT",
 	}
+	// typやalgも指定はできるが, 指定しなくても
 	jwt := NewJWT(header, claims)
 
-	return signJWT(privateKey, jwt)
+	return jwt.signJWT(privateKey)
 }
 
 // DecodeToken is decode token
@@ -64,27 +61,22 @@ func DecodeToken(state *tls.ConnectionState, jwtString string, publicKey *rsa.Pu
 	}
 
 	// verify token claims
-	// TODO: この検証ロジックはexpを知っているところで持つ
-	if exp, ok := jwt.claims["exp"].(int64); ok {
-		now := time.Now().Unix()
-		if exp < now {
-			return nil, ErrTokenExpire
-		}
+	if !jwt.claims.VerifyIat() {
+		return nil, ErrTokenIat
+	}
+	if !jwt.claims.VerifyExp() {
+		return nil, ErrTokenExpire
 	}
 
-	// proof-of-possession
-	// TODO: この検証ロジックはexpを知っているところで持つ
+	// proof of possession
 	tp, err := getThumbprintFromTLSState(state)
 	if err != nil {
 		return nil, err
 	}
-	if x5t, ok := jwt.claims["x5t"].(map[string]string); ok {
-		if s256, ok := x5t["S256"]; ok {
-			if s256 != tp {
-				return nil, ErrVerifyPoP
-			}
-		}
+	if !jwt.claims.VerifyPoP(tp) {
+		return nil, ErrVerifyPoP
 	}
+
 	return jwt, nil
 }
 

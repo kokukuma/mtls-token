@@ -12,6 +12,9 @@ var (
 	// ErrTokenExpire occers
 	ErrTokenExpire = errors.New("this token is expired")
 
+	// ErrTokenIat occers
+	ErrTokenIat = errors.New("this token cannot be used now")
+
 	// ErrMutualTLSConnection is used when the connection is not TLS
 	ErrMutualTLSConnection = errors.New("connection must be used mutual TLS")
 
