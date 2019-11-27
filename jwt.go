@@ -2,9 +2,6 @@ package auth
 
 import (
 	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -25,17 +22,26 @@ var (
 
 // JWT represents JWT
 type JWT struct {
+	raw    string
 	header RawHeader
 	claims RawClaims
-	// TODO: signing methodを追加.
-	// これを設定するときに、headerの値も指定される形にする.
+	method SignatureOperator
+}
+
+// SignatureOperator represents signature
+type SignatureOperator interface {
+	Sign(interface{}, string) ([]byte, error)
+	Verify(interface{}, string, []byte) error
 }
 
 // NewJWT creates JWT
 func NewJWT(header RawHeader, claims RawClaims) *JWT {
+	// TODO: method切り替えれるようにする.
+	// TODO: headerの値も指定される形にする.
 	return &JWT{
 		header: header,
 		claims: claims,
+		method: &RS256{},
 	}
 }
 
@@ -52,23 +58,21 @@ func (j *JWT) Encoding() (string, error) {
 		return "", err
 	}
 
-	e := fmt.Sprintf("%s.%s", h, c)
-
-	return e, nil
+	j.raw = fmt.Sprintf("%s.%s", h, c)
+	return j.raw, nil
 }
 
-func (j *JWT) signJWT(privateKey *rsa.PrivateKey) (string, error) {
+func (j *JWT) signJWT(privateKey interface{}) (string, error) {
 	// header
 	ss, err := j.Encoding()
 	if err != nil {
 		return "", err
 	}
 
-	// signature
-	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, alg, execSha256(ss))
-	if err != nil {
-		return "", err
-	}
+	// create signature
+	sig, err := j.method.Sign(privateKey, ss)
+
+	// Add signature to jwt
 	return fmt.Sprintf("%s.%s", ss, base64.RawURLEncoding.EncodeToString(sig)), nil
 }
 
@@ -79,10 +83,12 @@ func Parse(jwtString string) (*JWT, error) {
 		return nil, errors.New("invalid jwt format")
 	}
 
-	jwt := &JWT{
-		header: map[string]interface{}{},
-		claims: map[string]interface{}{},
-	}
+	jwt := NewJWT(
+		map[string]interface{}{},
+		map[string]interface{}{},
+	)
+	// TODO: NewJWT修正したときに何とかする
+	jwt.raw = jwtString
 
 	err := decodeUnmarshal(parts[0], &jwt.header)
 	if err != nil {
@@ -97,8 +103,8 @@ func Parse(jwtString string) (*JWT, error) {
 	return jwt, nil
 }
 
-func verifyJWT(token string, key *rsa.PublicKey) error {
-	parts := strings.Split(token, ".")
+func (j *JWT) verifyJWT(key interface{}) error {
+	parts := strings.Split(j.raw, ".")
 	if len(parts) != 3 {
 		return errors.New("invalid token received, token must have 3 parts")
 	}
@@ -108,13 +114,8 @@ func verifyJWT(token string, key *rsa.PublicKey) error {
 	if err != nil {
 		return err
 	}
-	return rsa.VerifyPKCS1v15(key, alg, execSha256(signedContent), []byte(signatureString))
-}
 
-func execSha256(data string) []byte {
-	h := sha256.New()
-	h.Write([]byte(data))
-	return h.Sum(nil)
+	return j.method.Verify(key, signedContent, []byte(signatureString))
 }
 
 func marshalEncode(d interface{}) (string, error) {

@@ -31,13 +31,13 @@ func GetTokenFromContext(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("invalid client auth format")
 	}
 
-	if strings.ToUpper(parts[0]) != "POP" {
-		return "", fmt.Errorf("token_type should be POP: %q", parts[0])
+	if strings.ToUpper(parts[0]) != "Bearer" {
+		return "", fmt.Errorf("token_type should be Bearer: %q", parts[0])
 	}
 	return parts[1], nil
 }
 
 // AddTokenToContext returns context that has token.
 func AddTokenToContext(ctx context.Context, token string) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, clientAuthKey, "POP "+token)
+	return metadata.AppendToOutgoingContext(ctx, clientAuthKey, "Bearer "+token)
 }

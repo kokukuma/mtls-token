@@ -1,14 +1,13 @@
 package auth
 
 import (
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
 )
 
 // IssueToken create token
-func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, rc RawClaims) (string, error) {
+func IssueToken(state *tls.ConnectionState, privateKey interface{}, rc RawClaims) (string, error) {
 	if state == nil {
 		return "", ErrMutualTLSConnection
 	}
@@ -29,6 +28,8 @@ func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, rc RawCl
 		return "", err
 	}
 
+	// TODO: headerはNewJWT内で作ればいいか.
+
 	// header
 	header := RawHeader{
 		"kid": "sample_key",
@@ -42,7 +43,7 @@ func IssueToken(state *tls.ConnectionState, privateKey *rsa.PrivateKey, rc RawCl
 }
 
 // DecodeToken is decode token
-func DecodeToken(state *tls.ConnectionState, jwtString string, publicKey *rsa.PublicKey) (*JWT, error) {
+func DecodeToken(state *tls.ConnectionState, jwtString string, publicKey interface{}) (*JWT, error) {
 	if state == nil {
 		return nil, ErrMutualTLSConnection
 	}
@@ -56,7 +57,7 @@ func DecodeToken(state *tls.ConnectionState, jwtString string, publicKey *rsa.Pu
 	}
 
 	// verify signature
-	if err := verifyJWT(jwtString, publicKey); err != nil {
+	if err := jwt.verifyJWT(publicKey); err != nil {
 		return nil, err
 	}
 
