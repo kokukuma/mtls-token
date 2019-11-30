@@ -10,6 +10,11 @@ import (
 type RS256 struct {
 }
 
+// Name returns alg name.
+func (r RS256) Name() string {
+	return "RS256"
+}
+
 // Sign creates signature
 func (r RS256) Sign(key interface{}, ss string) ([]byte, error) {
 	k, ok := key.(*rsa.PrivateKey)

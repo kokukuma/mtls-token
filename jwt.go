@@ -25,23 +25,16 @@ type JWT struct {
 	raw    string
 	header RawHeader
 	claims RawClaims
-	method SignatureOperator
-}
-
-// SignatureOperator represents signature
-type SignatureOperator interface {
-	Sign(interface{}, string) ([]byte, error)
-	Verify(interface{}, string, []byte) error
+	method Method
 }
 
 // NewJWT creates JWT
-func NewJWT(header RawHeader, claims RawClaims) *JWT {
-	// TODO: method切り替えれるようにする.
-	// TODO: headerの値も指定される形にする.
+func NewJWT(header RawHeader, claims RawClaims, method Method) *JWT {
+	header["alg"] = method.Name()
 	return &JWT{
 		header: header,
 		claims: claims,
-		method: &RS256{},
+		method: method,
 	}
 }
 
@@ -83,22 +76,38 @@ func Parse(jwtString string) (*JWT, error) {
 		return nil, errors.New("invalid jwt format")
 	}
 
+	// header
+	header := map[string]interface{}{}
+	err := decodeUnmarshal(parts[0], &header)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: headerのmethodにする.
+	if _, ok := header["alg"]; !ok {
+		return nil, errors.New("alg is not found in header")
+	}
+	if _, ok := header["alg"].(string); !ok {
+		return nil, errors.New("alg is not string")
+	}
+	method, err := ParseMethod(header["alg"].(string))
+	if err != nil {
+		return nil, err
+	}
+
+	// payload
+	claims := map[string]interface{}{}
+	err = decodeUnmarshal(parts[1], &claims)
+	if err != nil {
+		return nil, err
+	}
+
 	jwt := NewJWT(
-		map[string]interface{}{},
-		map[string]interface{}{},
+		header,
+		claims,
+		method,
 	)
 	// TODO: NewJWT修正したときに何とかする
 	jwt.raw = jwtString
-
-	err := decodeUnmarshal(parts[0], &jwt.header)
-	if err != nil {
-		return nil, err
-	}
-
-	err = decodeUnmarshal(parts[1], &jwt.claims)
-	if err != nil {
-		return nil, err
-	}
 
 	return jwt, nil
 }

@@ -15,7 +15,7 @@ func TestNewJWT(t *testing.T) {
 		"iss": "iss",
 	}
 
-	jwt := NewJWT(header, claims)
+	jwt := NewJWT(header, claims, RS256{})
 	if jwt == nil {
 		t.Errorf("jwt must be gotten")
 	}
@@ -30,12 +30,12 @@ func TestEncoding(t *testing.T) {
 		"empty": {
 			header: RawHeader{"kid": "kid"},
 			claims: RawClaims{"iss": "iss"},
-			expect: "eyJraWQiOiJraWQifQ.eyJpc3MiOiJpc3MifQ",
+			expect: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJpc3MiOiJpc3MifQ",
 		},
 		"multi claims": {
 			header: RawHeader{"kid": "kid"},
 			claims: RawClaims{"iss": "iss", "aud": "aud"},
-			expect: "eyJraWQiOiJraWQifQ.eyJhdWQiOiJhdWQiLCJpc3MiOiJpc3MifQ",
+			expect: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJhdWQiOiJhdWQiLCJpc3MiOiJpc3MifQ",
 		},
 		"with sharp": {
 			header: RawHeader{"kid": "kid"},
@@ -44,12 +44,12 @@ func TestEncoding(t *testing.T) {
 					"S256": "hash",
 				},
 			},
-			expect: "eyJraWQiOiJraWQifQ.eyJ4NXQiOnsiUzI1NiI6Imhhc2gifX0",
+			expect: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJ4NXQiOnsiUzI1NiI6Imhhc2gifX0",
 		},
 	}
 
 	for name, tc := range tcs {
-		jwt := NewJWT(tc.header, tc.claims)
+		jwt := NewJWT(tc.header, tc.claims, RS256{})
 		actual, err := jwt.Encoding()
 		if err != nil {
 			t.Errorf("Unexpected error occur: expect:%#v", err)
@@ -66,19 +66,24 @@ func TestParse(t *testing.T) {
 		header RawHeader
 		claims RawClaims
 	}{
-		"normal": {
-			jwt:    "eyJraWQiOiJraWQifQ.eyJpc3MiOiJpc3MifQ",
-			header: RawHeader{"kid": "kid"},
+		"hs256": {
+			jwt:    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJpc3MiOiJpc3MifQ",
+			header: RawHeader{"alg": "RS256", "kid": "kid"},
+			claims: RawClaims{"iss": "iss"},
+		},
+		"rs256": {
+			jwt:    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJpc3MiOiJpc3MifQ",
+			header: RawHeader{"alg": "RS256", "kid": "kid"},
 			claims: RawClaims{"iss": "iss"},
 		},
 		"multi claims": {
-			jwt:    "eyJraWQiOiJraWQifQ.eyJhdWQiOiJhdWQiLCJpc3MiOiJpc3MifQ",
-			header: RawHeader{"kid": "kid"},
+			jwt:    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJhdWQiOiJhdWQiLCJpc3MiOiJpc3MifQ",
+			header: RawHeader{"alg": "RS256", "kid": "kid"},
 			claims: RawClaims{"iss": "iss", "aud": "aud"},
 		},
 		"with sharp": {
-			jwt:    "eyJraWQiOiJraWQifQ.eyJ4NXQiOnsiUzI1NiI6Imhhc2gifX0",
-			header: RawHeader{"kid": "kid"},
+			jwt:    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJ4NXQiOnsiUzI1NiI6Imhhc2gifX0",
+			header: RawHeader{"alg": "RS256", "kid": "kid"},
 			claims: RawClaims{
 				"x5t": map[string]interface{}{
 					"S256": "hash",

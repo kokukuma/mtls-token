@@ -37,7 +37,7 @@ func IssueToken(state *tls.ConnectionState, privateKey interface{}, rc RawClaims
 		"typ": "JWT",
 	}
 	// typやalgも指定はできるが, 指定しなくても
-	jwt := NewJWT(header, claims)
+	jwt := NewJWT(header, claims, RS256{})
 
 	return jwt.signJWT(privateKey)
 }
