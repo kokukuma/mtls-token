@@ -34,8 +34,8 @@ func (r RawClaims) VerifyIat() bool {
 
 // VerifyPoP is check x5t#S256
 func (r RawClaims) VerifyPoP(tp string) bool {
-	if x5t, ok := r["x5t"].(map[string]interface{}); ok {
-		if s256, ok := x5t["S256"]; ok {
+	if x5t, ok := r["cnf"].(map[string]interface{}); ok {
+		if s256, ok := x5t["x5t#S256"]; ok {
 			if s256 == tp {
 				return true
 			}
@@ -74,20 +74,20 @@ func addTimeClaims(claims RawClaims) RawClaims {
 }
 
 func addX5tS256(claims RawClaims, thumbprint string) (RawClaims, error) {
-	if _, ok := claims["x5t"]; !ok {
-		claims["x5t"] = map[string]interface{}{
-			"S256": thumbprint,
+	if _, ok := claims["cnf"]; !ok {
+		claims["cnf"] = map[string]interface{}{
+			"x5t#S256": thumbprint,
 		}
 		return claims, nil
 	}
 
-	if _, ok := claims["x5t"].(map[string]interface{}); !ok {
-		return nil, errors.New("x5t must be map[string]interface{}")
+	if _, ok := claims["cnf"].(map[string]interface{}); !ok {
+		return nil, errors.New("cnf must be map[string]interface{}")
 	}
 
-	d := claims["x5t"].(map[string]interface{})
-	if _, s256 := d["S256"]; !s256 {
-		d["S256"] = thumbprint
+	d := claims["cnf"].(map[string]interface{})
+	if _, s256 := d["x5t#S256"]; !s256 {
+		d["x5t#S256"] = thumbprint
 		return claims, nil
 	}
 	return claims, nil

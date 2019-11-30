@@ -40,11 +40,11 @@ func TestEncoding(t *testing.T) {
 		"with sharp": {
 			header: RawHeader{"kid": "kid"},
 			claims: RawClaims{
-				"x5t": map[string]interface{}{
-					"S256": "hash",
+				"cnf": map[string]interface{}{
+					"x5t#S256": "hash",
 				},
 			},
-			expect: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJ4NXQiOnsiUzI1NiI6Imhhc2gifX0",
+			expect: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJjbmYiOnsieDV0I1MyNTYiOiJoYXNoIn19",
 		},
 	}
 
@@ -82,11 +82,11 @@ func TestParse(t *testing.T) {
 			claims: RawClaims{"iss": "iss", "aud": "aud"},
 		},
 		"with sharp": {
-			jwt:    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJ4NXQiOnsiUzI1NiI6Imhhc2gifX0",
+			jwt:    "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZCJ9.eyJjbmYiOnsieDV0I1MyNTYiOiJoYXNoIn19",
 			header: RawHeader{"alg": "RS256", "kid": "kid"},
 			claims: RawClaims{
-				"x5t": map[string]interface{}{
-					"S256": "hash",
+				"cnf": map[string]interface{}{
+					"x5t#S256": "hash",
 				},
 			},
 		},
@@ -145,35 +145,35 @@ func TestAddX5tS256(t *testing.T) {
 	}{
 		"normal": {
 			input: RawClaims{"iss": "iss"},
-			output: RawClaims{"iss": "iss", "x5t": map[string]interface{}{
-				"S256": "thumbprint",
+			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+				"x5t#S256": "thumbprint",
 			}},
 		},
 		"set x5t#S256": {
-			input: RawClaims{"iss": "iss", "x5t": map[string]interface{}{
-				"S256": "thumbprint2",
+			input: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+				"x5t#S256": "thumbprint2",
 			}},
-			output: RawClaims{"iss": "iss", "x5t": map[string]interface{}{
-				"S256": "thumbprint2",
+			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+				"x5t#S256": "thumbprint2",
 			}},
 		},
 		"set x5t": {
-			input: RawClaims{"iss": "iss", "x5t": map[string]interface{}{
+			input: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
 				"test": "test",
 			}},
-			output: RawClaims{"iss": "iss", "x5t": map[string]interface{}{
-				"S256": "thumbprint",
-				"test": "test",
+			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+				"x5t#S256": "thumbprint",
+				"test":     "test",
 			}},
 		},
 		"set other type x5t": {
-			input: RawClaims{"iss": "iss", "x5t": map[string]string{
-				"S256": "thumbprint2",
+			input: RawClaims{"iss": "iss", "cnf": map[string]string{
+				"x5t#S256": "thumbprint2",
 			}},
-			output: RawClaims{"iss": "iss", "x5t": map[string]interface{}{
-				"S256": "thumbprint2",
+			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+				"x5t#S256": "thumbprint2",
 			}},
-			err: errors.New("x5t must be map[string]interface{}"),
+			err: errors.New("cnf must be map[string]interface{}"),
 		},
 	}
 
