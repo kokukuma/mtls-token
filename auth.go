@@ -74,7 +74,7 @@ func DecodeToken(state *tls.ConnectionState, jwtString string, publicKey interfa
 	if err != nil {
 		return nil, err
 	}
-	if !jwt.claims.VerifyPoP(tp) {
+	if tp != jwt.claims.GetX5tS256() {
 		return nil, ErrVerifyPoP
 	}
 

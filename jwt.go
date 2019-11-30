@@ -64,6 +64,9 @@ func (j *JWT) signJWT(privateKey interface{}) (string, error) {
 
 	// create signature
 	sig, err := j.method.Sign(privateKey, ss)
+	if err != nil {
+		return "", err
+	}
 
 	// Add signature to jwt
 	return fmt.Sprintf("%s.%s", ss, base64.RawURLEncoding.EncodeToString(sig)), nil
@@ -77,25 +80,22 @@ func Parse(jwtString string) (*JWT, error) {
 	}
 
 	// header
-	header := map[string]interface{}{}
+	header := RawHeader{}
 	err := decodeUnmarshal(parts[0], &header)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: headerのmethodにする.
-	if _, ok := header["alg"]; !ok {
-		return nil, errors.New("alg is not found in header")
+	alg, err := header.GetString("alg")
+	if err != nil {
+		return nil, err
 	}
-	if _, ok := header["alg"].(string); !ok {
-		return nil, errors.New("alg is not string")
-	}
-	method, err := ParseMethod(header["alg"].(string))
+	method, err := ParseMethod(alg)
 	if err != nil {
 		return nil, err
 	}
 
 	// payload
-	claims := map[string]interface{}{}
+	claims := RawClaims{}
 	err = decodeUnmarshal(parts[1], &claims)
 	if err != nil {
 		return nil, err
@@ -141,6 +141,7 @@ func decodeUnmarshal(s string, d interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	if err := json.Unmarshal(decoded, &d); err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"errors"
 )
 
+// RS256 represent Signature algorithm.
 type RS256 struct {
 }
 
@@ -21,12 +22,7 @@ func (r RS256) Sign(key interface{}, ss string) ([]byte, error) {
 	if !ok {
 		return nil, errors.New("Unexpected key type")
 	}
-
-	sig, err := rsa.SignPKCS1v15(rand.Reader, k, alg, execSha256(ss))
-	if err != nil {
-		return nil, err
-	}
-	return sig, nil
+	return rsa.SignPKCS1v15(rand.Reader, k, alg, execSha256(ss))
 }
 
 // Verify exec verify signature

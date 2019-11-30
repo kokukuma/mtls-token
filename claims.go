@@ -8,40 +8,48 @@ import (
 // RawClaims is the claims of JWT
 type RawClaims map[string]interface{}
 
+// GetInt64 returns value as int64 related to the key.
+func (r RawClaims) GetInt64(key string) (int64, error) {
+	if _, ok := r[key]; !ok {
+		return 0, errors.New("key is not found in claims")
+	}
+	switch v := r[key].(type) {
+	case int64:
+		return v, nil
+	case float64:
+		return int64(v), nil
+	}
+	return 0, errors.New("type is not much")
+}
+
 // VerifyExp is check exp
 func (r RawClaims) VerifyExp() bool {
-	if _, ok := r["exp"]; !ok {
+	exp, err := r.GetInt64("exp")
+	if err != nil {
 		return false
 	}
-	if exp, ok := r["exp"].(int64); ok {
-		now := timeFunc()
-		return exp > now.Unix()
-	}
-	return true
+	return exp > timeFunc().Unix()
 }
 
 // VerifyIat is check iat
 func (r RawClaims) VerifyIat() bool {
-	now := timeFunc()
-	if _, ok := r["iat"]; !ok {
+	iat, err := r.GetInt64("iat")
+	if err != nil {
 		return false
 	}
-	if iat, ok := r["iat"].(int64); !ok {
-		return iat < now.Unix()
-	}
-	return true
+	return iat <= timeFunc().Unix()
 }
 
-// VerifyPoP is check x5t#S256
-func (r RawClaims) VerifyPoP(tp string) bool {
-	if x5t, ok := r["cnf"].(map[string]interface{}); ok {
-		if s256, ok := x5t["x5t#S256"]; ok {
-			if s256 == tp {
-				return true
+// GetX5tS256 is check x5t#S256
+func (r RawClaims) GetX5tS256() string {
+	if cnf, ok := r["cnf"].(map[string]interface{}); ok {
+		if s256, ok := cnf["x5t#S256"]; ok {
+			if v, ok := s256.(string); ok {
+				return v
 			}
 		}
 	}
-	return false
+	return ""
 }
 
 // NewClaims creates claims
@@ -58,14 +66,14 @@ func NewClaims(claims RawClaims, thumbprint string) (RawClaims, error) {
 func addTimeClaims(claims RawClaims) RawClaims {
 	now := timeFunc()
 
-	if _, ok := claims["iat"]; !ok {
+	if _, err := claims.GetInt64("iat"); err != nil {
 		claims["iat"] = now.Unix()
 	}
 
-	if _, ok := claims["exp"]; !ok {
+	if _, err := claims.GetInt64("exp"); err != nil {
 		iat := now
-		if t, ok := claims["iat"].(int64); ok {
-			iat = time.Unix(t, 0)
+		if v, err := claims.GetInt64("iat"); err == nil {
+			iat = time.Unix(v, 0)
 		}
 		claims["exp"] = iat.Add(time.Hour).Unix()
 	}

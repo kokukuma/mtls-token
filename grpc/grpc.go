@@ -12,21 +12,21 @@ import (
 )
 
 // IssueToken creates access token.
-func IssueToken(ctx context.Context, privateKey *rsa.PrivateKey, token mtls_token.Issuer) (string, error) {
+func IssueToken(ctx context.Context, privateKey *rsa.PrivateKey, claims mtls_token.RawClaims) (string, error) {
 	state, err := getCSFromContext(ctx)
 	if err != nil {
 		return "", err
 	}
-	return mtls_token.IssueToken(state, privateKey, token)
+	return mtls_token.IssueToken(state, privateKey, claims)
 }
 
 // DecodeToken decode token
-func DecodeToken(ctx context.Context, payload string, publicKey *rsa.PublicKey, token mtls_token.Verifyer) error {
+func DecodeToken(ctx context.Context, payload string, publicKey *rsa.PublicKey) (*mtls_token.JWT, error) {
 	state, err := getCSFromContext(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return mtls_token.DecodeToken(state, payload, publicKey, token)
+	return mtls_token.DecodeToken(state, payload, publicKey)
 }
 
 func getCSFromContext(ctx context.Context) (*tls.ConnectionState, error) {

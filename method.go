@@ -11,8 +11,12 @@ type Method interface {
 
 // ParseMethod convert alg name to method.
 func ParseMethod(name string) (Method, error) {
-	if name == "RS256" {
+	switch name {
+	case "HS256":
+		return HS256{}, nil
+	case "RS256":
 		return RS256{}, nil
+	default:
+		return nil, errors.New("Unsupported error")
 	}
-	return nil, errors.New("Unsupported error")
 }

@@ -52,7 +52,7 @@ ZwIDAQAB
 
 func testingKey(s string) string { return strings.ReplaceAll(s, "TESTING KEY", "PRIVATE KEY") }
 
-func TestSignVerifySuccess(t *testing.T) {
+func TestRS256SignVerifySuccess(t *testing.T) {
 	priv, err := getPrivateKey()
 	if err != nil {
 		t.Fatalf("Unexpected error occur: expect:%#v", err)
@@ -84,7 +84,7 @@ func TestSignVerifySuccess(t *testing.T) {
 	}
 }
 
-func TestSignFailed(t *testing.T) {
+func TestRS256SignFailed(t *testing.T) {
 	tcs := map[string]struct {
 		privKey  interface{}
 		contents string

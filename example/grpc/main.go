@@ -17,13 +17,6 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-type customToken struct {
-	mtoken.Token
-	ClientID string   `json:"client_id"`
-	DNSName  string   `json:"dns_name"`
-	Test     []string `json:"test"`
-}
-
 func main() {
 	// sample private/public key
 	privKey, pubKey := creteSampleKey()
@@ -31,31 +24,27 @@ func main() {
 	// Just create mock of ctx used in TLS connection
 	ctx := createSampleTLSContext()
 
-	// create token struct
-	token := &customToken{
-		Token: mtoken.Token{
-			Kid: "kokukuma",
-			Iss: "kokukuma",
-		},
-		ClientID: "3",
-		DNSName:  "kokukuma.com",
-		Test:     []string{"kokuban", "kumasan"},
+	claims := mtoken.RawClaims{
+		"iss":       "kokukuma",
+		"client_id": "3",
+		"dns_name":  "kokukuma.com",
+		"test":      []string{"kokuban", "kumasan"},
 	}
-	fmt.Println(token)
+	fmt.Println(claims)
 
 	// create token string
-	tokenStr, err := mtoken_grpc.IssueToken(ctx, privKey, token)
+	tokenStr, err := mtoken_grpc.IssueToken(ctx, privKey, claims)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 	fmt.Println(tokenStr)
 
 	// verify and decode token struct from token string
-	verifiedToken := &customToken{}
-	err = mtoken_grpc.DecodeToken(ctx, tokenStr, pubKey, verifiedToken)
+	jwt, err := mtoken_grpc.DecodeToken(ctx, tokenStr, pubKey)
 	if err != nil {
+		log.Fatalf("%v", err)
 	}
-	fmt.Println(verifiedToken)
+	fmt.Println(jwt)
 }
 
 func createSampleTLSContext() context.Context {
