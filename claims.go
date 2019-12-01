@@ -54,12 +54,17 @@ func (r RawClaims) GetX5tS256() string {
 
 // NewClaims creates claims
 func NewClaims(claims RawClaims, thumbprint string) (RawClaims, error) {
-	var err error
+
+	// add default claims
 	claims = addTimeClaims(claims)
+
+	// add default claims
+	var err error
 	claims, err = addX5tS256(claims, thumbprint)
 	if err != nil {
 		return claims, err
 	}
+
 	return claims, nil
 }
 
@@ -83,20 +88,18 @@ func addTimeClaims(claims RawClaims) RawClaims {
 
 func addX5tS256(claims RawClaims, thumbprint string) (RawClaims, error) {
 	if _, ok := claims["cnf"]; !ok {
-		claims["cnf"] = map[string]interface{}{
+		claims["cnf"] = RawClaims{
 			"x5t#S256": thumbprint,
 		}
 		return claims, nil
 	}
 
-	if _, ok := claims["cnf"].(map[string]interface{}); !ok {
-		return nil, errors.New("cnf must be map[string]interface{}")
-	}
-
-	d := claims["cnf"].(map[string]interface{})
-	if _, s256 := d["x5t#S256"]; !s256 {
-		d["x5t#S256"] = thumbprint
+	if cnf, ok := claims["cnf"].(RawClaims); ok {
+		if _, s256 := cnf["x5t#S256"]; !s256 {
+			cnf["x5t#S256"] = thumbprint
+			return claims, nil
+		}
 		return claims, nil
 	}
-	return claims, nil
+	return nil, errors.New("cnf must be RawClaims")
 }

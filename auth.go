@@ -33,7 +33,6 @@ func IssueToken(state *tls.ConnectionState, privateKey interface{}, rc RawClaims
 	// header
 	header := RawHeader{
 		"kid": "sample_key",
-		"alg": "RS256",
 		"typ": "JWT",
 	}
 	// typやalgも指定はできるが, 指定しなくても

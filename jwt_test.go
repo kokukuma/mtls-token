@@ -145,23 +145,23 @@ func TestAddX5tS256(t *testing.T) {
 	}{
 		"normal": {
 			input: RawClaims{"iss": "iss"},
-			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+			output: RawClaims{"iss": "iss", "cnf": RawClaims{
 				"x5t#S256": "thumbprint",
 			}},
 		},
 		"set x5t#S256": {
-			input: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+			input: RawClaims{"iss": "iss", "cnf": RawClaims{
 				"x5t#S256": "thumbprint2",
 			}},
-			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+			output: RawClaims{"iss": "iss", "cnf": RawClaims{
 				"x5t#S256": "thumbprint2",
 			}},
 		},
 		"set x5t": {
-			input: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+			input: RawClaims{"iss": "iss", "cnf": RawClaims{
 				"test": "test",
 			}},
-			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+			output: RawClaims{"iss": "iss", "cnf": RawClaims{
 				"x5t#S256": "thumbprint",
 				"test":     "test",
 			}},
@@ -170,10 +170,10 @@ func TestAddX5tS256(t *testing.T) {
 			input: RawClaims{"iss": "iss", "cnf": map[string]string{
 				"x5t#S256": "thumbprint2",
 			}},
-			output: RawClaims{"iss": "iss", "cnf": map[string]interface{}{
+			output: RawClaims{"iss": "iss", "cnf": RawClaims{
 				"x5t#S256": "thumbprint2",
 			}},
-			err: errors.New("cnf must be map[string]interface{}"),
+			err: errors.New("cnf must be RawClaims"),
 		},
 	}
 
