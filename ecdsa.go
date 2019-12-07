@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"errors"
@@ -50,7 +49,10 @@ func (e ES256) Sign(key interface{}, ss string) ([]byte, error) {
 }
 
 func padding(b []byte, l int) []byte {
-	pad := bytes.Repeat([]byte{}, l-len(b))
+	if l <= len(b) {
+		l = len(b)
+	}
+	pad := make([]byte, l-len(b))
 	return append(pad, b...)
 }
 

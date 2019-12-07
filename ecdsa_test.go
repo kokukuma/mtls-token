@@ -2,6 +2,8 @@ package auth
 
 import (
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func getECDSAPrivateKey() (interface{}, error) {
@@ -74,6 +76,38 @@ func TestES256SignFailed(t *testing.T) {
 		}
 		if err.Error() != tc.err {
 			t.Errorf("Unexpeccted error occur: %s: expect:%#v, given:%#v", name, tc.err, err.Error())
+		}
+	}
+}
+
+func TestPadding(t *testing.T) {
+	tcs := map[string]struct {
+		b []byte
+		l int
+		e int
+	}{
+		"low": {
+			b: []byte("abcde"),
+			l: 10,
+			e: 10,
+		},
+		"same": {
+			b: []byte("abcde"),
+			l: 5,
+			e: 5,
+		},
+		"over": {
+			b: []byte("abcde"),
+			l: 3,
+			e: 5,
+		},
+	}
+
+	for name, tc := range tcs {
+		b := padding(tc.b, tc.l)
+		spew.Dump(b)
+		if len(b) != tc.e {
+			t.Errorf("Unexpeccted length in %s: expect:%#v, given:%#v", name, tc.e, len(b))
 		}
 	}
 }
