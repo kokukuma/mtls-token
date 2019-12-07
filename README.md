@@ -30,38 +30,23 @@ The problem of Bearer token is that attacker gets the access token, they can acc
 
 
 ### How to use
-+ Define token format. It is defined in authorization server.
++ Define token claims. It is defined in authorization server.
   ```
-  // default token
-  token := auth.Token{
-    Iss: "some organization",
-  }
-
-  // token with custom fields
-  type customToken struct {
-    auth.Token
-    ClientID string   `json:"client_id"`
-    Email    string   `json:"email"`
-    Array    []string `json:"array"`
-  }
-  token := customToken{
-    Token: auth.Token{
-      Iss: "kokukuma",
-    },
-    ClientID: "3",
-    DNSName:  "kokukuma.com",
-    Test:     []string{"kokuban", "kumasan"},
-  }
+	claims := mtoken.RawClaims{
+		"iss":       "kokukuma",
+		"client_id": "3",
+		"dns_name":  "kokukuma.com",
+		"test":      []string{"kokuban", "kumasan"},
+	}
   ```
 
 + Encode token to signedJWT. It is done in authorization server.
   ```
-  tokenStr, err := auth_grpc.IssueToken(ctx, privKey, token)
+  tokenStr, err := mtoken_grpc.IssueToken(ctx, privKey, claims)
   ```
 
 + Decode and verify the signedJWT. It is done in resource server.
   ```
-  token := &customToken{}
-  err = auth_grpc.DecodeToken(ctx, tokenStr, pubKey, token)
+  jwt, err = auth_grpc.DecodeToken(ctx, tokenStr, pubKey)
   ```
 
