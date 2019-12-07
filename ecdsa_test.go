@@ -1,9 +1,7 @@
-package auth
+package mtoken
 
 import (
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 func getECDSAPrivateKey() (interface{}, error) {
@@ -105,7 +103,6 @@ func TestPadding(t *testing.T) {
 
 	for name, tc := range tcs {
 		b := padding(tc.b, tc.l)
-		spew.Dump(b)
 		if len(b) != tc.e {
 			t.Errorf("Unexpeccted length in %s: expect:%#v, given:%#v", name, tc.e, len(b))
 		}

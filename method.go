@@ -1,4 +1,4 @@
-package auth
+package mtoken
 
 import "errors"
 
@@ -16,6 +16,8 @@ func ParseMethod(name string) (Method, error) {
 		return HS256{}, nil
 	case "RS256":
 		return RS256{}, nil
+	case "ES256":
+		return ES256{}, nil
 	default:
 		return nil, errors.New("Unsupported error")
 	}

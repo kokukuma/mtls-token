@@ -1,4 +1,4 @@
-package auth
+package mtoken
 
 import (
 	"crypto/sha256"
